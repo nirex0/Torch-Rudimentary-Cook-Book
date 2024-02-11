@@ -1,7 +1,7 @@
 #CONFIG
 
 weights_path = 'weights.pth'
-device = 'mps' # use this device for Mac M1 GPU
+device = 'mps' # use this device for Mac's Metal GPU
 device = 'cuda:1'
 image_dims = (32, 32)
 image_channels = 3
