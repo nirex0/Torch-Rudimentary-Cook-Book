@@ -3,13 +3,18 @@ import torch.nn as nn
 import torch
 from torch.utils.data import Dataset, DataLoader
 
+data_channels = 1
+seq_len = 100
+latent_size = 25
+conv_channels = 32
+conv_kernel = 3 
 
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
-        self.conv1 = nn.Conv1d(16, 32, 3, padding=1)
-        self.bn1 = nn.BatchNorm1d(32)
-        self.linear = nn.Linear(50, 25)
+        self.conv1 = nn.Conv1d(data_channels, conv_channels, conv_kernel, padding=1)
+        self.bn1 = nn.BatchNorm1d(conv_channels)
+        self.linear = nn.Linear(seq_len, latent_size)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -20,21 +25,21 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
-        self.convT1 = nn.ConvTranspose1d(32, 16, 3, padding=1)
-        self.bn1 = nn.BatchNorm1d(16)
-        self.linear = nn.Linear(25, 50)
+        self.linear = nn.Linear(latent_size, seq_len)
+        self.bn1 = nn.BatchNorm1d(conv_channels)
+        self.convT1 = nn.ConvTranspose1d(conv_channels, data_channels, conv_kernel, padding=1)
 
     def forward(self, x):
-        x = self.convT1(x)
-        x = self.bn1(x)
         x = self.linear(x)
+        x = self.bn1(x)
+        x = self.convT1(x)
         return x
 
 # Define your custom dataset
 class MyDataset(Dataset):
     def __init__(self, n):
         self.n = n
-        self.data = torch.randn(n, 16, 50)
+        self.data = torch.randn(n, data_channels, seq_len)
 
     def __len__(self):
         return self.n
