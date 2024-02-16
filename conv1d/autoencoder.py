@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import torch
 from torch.utils.data import Dataset, DataLoader
+from matplotlib import pyplot as plt 
 
-data_channels = 1
-seq_len = 100
-latent_size = 25
+data_channels = 2
+seq_len = 10
+latent_size = 4
 conv_channels = 32
 conv_kernel = 3 
 
@@ -85,9 +86,30 @@ if __name__ == '__main__':
     criterion = nn.MSELoss()
 
     # Define the optimizer
-    learning_rate = 0.001
+    learning_rate = 0.005
     optimizer = torch.optim.Adam(list(encoder.parameters()) + list(decoder.parameters()), lr=learning_rate)
 
     # Train the model
-    num_epochs = 100
+    num_epochs = 50
     train_model(dataloader, encoder, decoder, criterion, optimizer, num_epochs)
+
+    # After training, let's input 1 data point and get the output
+    single_data_point = torch.randn(1, data_channels, seq_len)
+    encoder.eval()
+    decoder.eval()
+    with torch.no_grad():
+        encoded = encoder(single_data_point)
+        decoded = decoder(encoded)
+
+    # Now let's plot the input and output side by side
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot(1, 2, 1)
+    plt.title('Input')
+    plt.plot(single_data_point.view(-1).numpy())
+    
+    plt.subplot(1, 2, 2)
+    plt.title('Output')
+    plt.plot(decoded.view(-1).numpy())
+
+    plt.show()
