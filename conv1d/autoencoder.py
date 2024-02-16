@@ -15,7 +15,7 @@ conv_kernel = 3
 num_samples_in_dataset = 1000
 batch_size = 256
 learning_rate = 0.005
-num_epochs = 50
+num_epochs = 100
     
 class Encoder(nn.Module):
     def __init__(self):
@@ -52,6 +52,7 @@ class Decoder(nn.Module):
         self.relu3 = nn.ReLU()
         self.bn3 = nn.BatchNorm1d(conv_channels)
         self.convT2 = nn.ConvTranspose1d(conv_channels, data_channels, conv_kernel, padding=1)
+        # self.tanh1 = nn.Tanh()
 
     def forward(self, x):
         x = self.linear1(x)
@@ -64,6 +65,7 @@ class Decoder(nn.Module):
         x = self.relu3(x)
         x = self.bn3(x)
         x = self.convT2(x)
+        # x = self.tanh1(x)
         return x
 
 # Define your custom dataset
@@ -127,6 +129,17 @@ if __name__ == '__main__':
         encoded = encoder(single_data_point)
         decoded = decoder(encoded)
 
+    plt.figure(figsize=(6, 6))
+
+    # Now let's plot the input and output side by side
+    plt.title('Input and Output')
+    plt.plot(single_data_point.view(-1).numpy(), label='Input', color='blue')
+    plt.plot(decoded.view(-1).numpy(), label='Output', color='red')
+
+    plt.legend(loc='upper right')
+    plt.show()
+
+    exit()
     # Now let's plot the input and output side by side
     plt.figure(figsize=(12, 6))
 
