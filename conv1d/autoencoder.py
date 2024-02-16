@@ -4,36 +4,66 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from matplotlib import pyplot as plt 
 
-data_channels = 2
-seq_len = 10
-latent_size = 4
+data_channels = 1
+seq_len = 100
+
+latent_size = 25
+
 conv_channels = 32
 conv_kernel = 3 
 
+num_samples_in_dataset = 1000
+batch_size = 256
+learning_rate = 0.005
+num_epochs = 50
+    
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
         self.conv1 = nn.Conv1d(data_channels, conv_channels, conv_kernel, padding=1)
+        self.relu1 = nn.ReLU()
         self.bn1 = nn.BatchNorm1d(conv_channels)
+        self.conv2 = nn.Conv1d(conv_channels, conv_channels, conv_kernel, padding=1)
+        self.relu2 = nn.ReLU()
+        self.bn2 = nn.BatchNorm1d(conv_channels)
         self.linear = nn.Linear(seq_len, latent_size)
+
 
     def forward(self, x):
         x = self.conv1(x)
+        x = self.relu1(x)
         x = self.bn1(x)
+        x = self.conv2(x)
+        x = self.relu2(x)
+        x = self.bn2(x)
         x = self.linear(x)
         return x
 
 class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
-        self.linear = nn.Linear(latent_size, seq_len)
+        self.linear1 = nn.Linear(latent_size, seq_len)
+        self.relu1 = nn.ReLU()
         self.bn1 = nn.BatchNorm1d(conv_channels)
-        self.convT1 = nn.ConvTranspose1d(conv_channels, data_channels, conv_kernel, padding=1)
+        self.linear2 = nn.Linear(seq_len, seq_len)
+        self.relu2 = nn.ReLU()
+        self.bn2 = nn.BatchNorm1d(conv_channels)
+        self.convT1 = nn.ConvTranspose1d(conv_channels, conv_channels, conv_kernel, padding=1)
+        self.relu3 = nn.ReLU()
+        self.bn3 = nn.BatchNorm1d(conv_channels)
+        self.convT2 = nn.ConvTranspose1d(conv_channels, data_channels, conv_kernel, padding=1)
 
     def forward(self, x):
-        x = self.linear(x)
+        x = self.linear1(x)
+        x = self.relu1(x)
         x = self.bn1(x)
+        x = self.linear2(x)
+        x = self.relu2(x)
+        x = self.bn2(x)
         x = self.convT1(x)
+        x = self.relu3(x)
+        x = self.bn3(x)
+        x = self.convT2(x)
         return x
 
 # Define your custom dataset
@@ -71,26 +101,22 @@ def train_model(dataloader, encoder, decoder, criterion, optimizer, num_epochs=1
 if __name__ == '__main__':
 
     # Generate n training samples
-    n = 1000
-    dataset = MyDataset(n)
+    dataset = MyDataset(num_samples_in_dataset)
 
     # Create auto-encoder models
     encoder = Encoder()
     decoder = Decoder()
 
     # Create a DataLoader
-    batch_size = 32
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     # Define the loss function
     criterion = nn.MSELoss()
 
     # Define the optimizer
-    learning_rate = 0.005
     optimizer = torch.optim.Adam(list(encoder.parameters()) + list(decoder.parameters()), lr=learning_rate)
 
     # Train the model
-    num_epochs = 50
     train_model(dataloader, encoder, decoder, criterion, optimizer, num_epochs)
 
     # After training, let's input 1 data point and get the output
